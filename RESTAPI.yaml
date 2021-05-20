@@ -1,0 +1,195 @@
+swagger: '2.0'
+info:
+  title: RESE REST API
+  description: 'REST implementation of the RESE API See:'
+  version: "4.1"
+externalDocs:
+  url: 'http://wiki.gv.grassvalley.com/display/CORETECH/v3.x_API+Reference+Manual'
+
+paths:
+  /receivers:
+    patch:
+      tags:
+        - Receivers
+      operationId: applyRcvControlBulk
+      summary: Bulk Control of multiple receivers 
+      responses:
+        '200':
+          description: Success
+    get:
+      tags:
+        - Receivers
+      operationId: getRcvStatusBulk
+      summary: Retreive the statuses of multiple receivers
+      responses:
+        '200':
+          description: Success
+  
+  /receivers/params:
+    put:
+      tags:
+        - Receivers
+      operationId: setRcvParamsBulk
+      summary: Sets the parameters of multiple receivers
+      responses:
+        '200':
+          description: Success
+          
+  /receiver/{id}:
+    patch:
+      tags:
+        - Receivers
+      operationId: applyRcvControl
+      summary: Controls a given receiver using Rese::applyControl()
+      description: ''
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: path
+          type: string
+          name: id
+          description: Receiver ID
+          required: true
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/ReceiverControl'
+          
+      responses:
+        '200':
+          description: Success
+    get:
+      tags:
+        - Receivers
+      operationId: getRcvStatus
+      summary: Reads statuses from the receiver
+      parameters:
+        - in: path
+          type: string
+          name: id
+          description: Receiver ID
+          required: true
+      responses:
+        '200':
+          description: Success
+          schema:
+            $ref: '#/definitions/VideoRcvStatuses'
+              
+            
+  /receiver/{id}/params:    
+    put:
+      tags:
+        - Receivers
+      operationId: setRcvParams
+      summary: Updates parameters in the receiver
+      parameters:
+        - in: path
+          type: string
+          name: id
+          description: Receiver ID
+          required: true
+      responses:
+        '200':
+          description: Success
+    get:
+      tags:
+        - Receivers
+      operationId: getFromRcv
+      summary: Reads parameters from the receiver
+      parameters:
+        - in: path
+          type: string
+          name: id
+          description: Receiver ID
+          required: true
+      responses:
+        '200':
+          description: Success
+            
+  
+definitions:
+  ReceiverControl:
+    title: Receiver control
+    description: Control parameters for RESE::applyControl() of receivers
+    type: object
+    properties:
+      command_id:
+        type: string
+        description: control functions that apply to receivers only. See rese::ControlId_e for details
+        enum:
+          - CONTROL_START
+          - CONTROL_STOP
+          - CONTROL_RENEW
+          - CONTROL_RESET_REF_PROBE
+          - CONTROL_RESET_PACKET_ERROR_COUNT
+          - CONTROL_RESET_MISSING_PACKET_DETECTOR
+          - CONTROL_RESET_BUF_STATS
+          - CONTROL_RESET_FRAME_SYNC_STATS
+      uri: 
+        type: string
+        description: Optional with CONTROL_START only to specify the URI of the flow to join
+        example: "rtp://239.1.1.1:10000@10.5.3.2"
+    required: 
+    - command_id
+  
+      
+  ReceiverStatuses:
+    title: Receiver Statuses
+    description: The rese::StatusId_e common to all receivers 
+    type: object
+    properties:
+      rcvType:
+        type: string
+        enum:
+          - UniversalVideo
+          - ST2110_30
+          - ST2110_40
+          - ST2110_22
+      STATUS_RCVR_REDUNDANCY:
+        type: object
+        properties:
+          skewValue:
+            type: integer
+          overlfow:
+            type: boolean
+          pointerError:
+            type: boolean
+      STATUS_RESE_INFO:
+        type: object
+        properties:
+          flowid:
+            type: integer
+          recorderch:
+            type: integer
+    required: 
+    - rcvType
+        
+      
+  VideoRcvStatuses:
+    title: Universal Video Receiver statuses
+    description: The rese::StatusId_e that applies to universal video
+    allOf:
+      - $ref: '#/definitions/ReceiverStatuses'
+      - type: object
+        properties: 
+          STATUS_STREAM:
+            type: object
+            description: The status of the video receiver as per rese::universalVideo_Rx_Status_t
+            
+      
+  AudioRcvStatuses:
+    title: Audio ST2110-30 Receiver statuses
+    description: The rese::StatusId_e that applies to ST2110-30
+    allOf:
+      - $ref: '#/definitions/ReceiverStatuses'
+      - type: object
+        properties: 
+          STATUS_STREAM:
+            type: object
+            description: The status of the video receiver as per rese::universalVideo_Rx_Status_t
+        
+        
+    
